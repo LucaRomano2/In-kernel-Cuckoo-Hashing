@@ -1,0 +1,13 @@
+/module/.cuckoo_hash_kernel.ko.cmd
+/module/.cuckoo_hash_kernel.mod.cmd
+/module/.cuckoo_hash_kernel.mod.o.cmd
+/module/.cuckoo_hash_kernel.o.cmd
+/module/.Module.symvers.cmd
+/module/.modules.order.cmd
+/module/cuckoo_hash_kernel.ko
+/module/cuckoo_hash_kernel.mod
+/module/cuckoo_hash_kernel.mod.c
+/module/cuckoo_hash_kernel.mod.o
+/module/cuckoo_hash_kernel.o
+/module/Module.symvers
+/module/modules.order
