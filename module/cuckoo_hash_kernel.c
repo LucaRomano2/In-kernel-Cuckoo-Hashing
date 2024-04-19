@@ -7,6 +7,7 @@
 #include <linux/time.h>
 #include <linux/slab.h>
 #include <linux/log2.h>
+#include <linux/kthread.h>
 
 #define MIN_TAB_SIZE (4)
 #define MAX_LINE_LEN (8192)
@@ -296,6 +297,7 @@ void ckh_print(CKHash_Table *D)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+static DEFINE_MUTEX(mutex);
 static char word_to_insert[MAX_BUF_LEN] = "";
 static char word_to_delete[MAX_BUF_LEN] = "";
 static char word_to_get[MAX_BUF_LEN] = "";
@@ -315,6 +317,7 @@ static ssize_t get_store(struct kobject *kobj, struct kobj_attribute *attr, cons
     if (count >= MAX_BUF_LEN)
         return -EINVAL;
 
+	mutex_lock(&mutex);
 	free_word(word_to_get);
     strncpy(word_to_get, buf, count - 1);
 	
@@ -323,6 +326,7 @@ static ssize_t get_store(struct kobject *kobj, struct kobj_attribute *attr, cons
 		pr_info("found [%s] value=%d\n", word_to_get, ret_value);
 	else
 		pr_info("could not find [%s]\n", word_to_get);
+	mutex_unlock(&mutex);
 	
     return count;
 }
@@ -335,6 +339,7 @@ static ssize_t insert_store(struct kobject *kobj, struct kobj_attribute *attr, c
     if (count >= MAX_BUF_LEN)
         return -EINVAL;
 
+	mutex_lock(&mutex);
 	free_word(word_to_insert);
     strncpy(word_to_insert, buf, count - 1);	
 	
@@ -349,6 +354,7 @@ static ssize_t value_store(struct kobject *kobj, struct kobj_attribute *attr, co
 	sscanf(buf, "%d", &value_to_insert);
 
 	ckh_insert(D, (unsigned char *)word_to_insert, value_to_insert);	
+	mutex_unlock(&mutex);
 	
     return count;
 }
@@ -360,11 +366,12 @@ static ssize_t delete_show(struct kobject *kobj, struct kobj_attribute *attr, ch
 static ssize_t delete_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
     if (count >= MAX_BUF_LEN)
         return -EINVAL;
-
+	mutex_lock(&mutex);
 	free_word(word_to_delete);
     strncpy(word_to_delete, buf, count - 1);	
 	ckh_delete(D, (unsigned char *)word_to_delete);	
-	
+	mutex_unlock(&mutex);
+
     return count;
 }
 
