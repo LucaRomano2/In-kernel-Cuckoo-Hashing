@@ -43,4 +43,4 @@ To execute type on the command line: `python3 test.py NUM_COMMANDS NUM_TERMINALS
  
  \- `NUM_WORLDS` indicates the number of words that will be present in the vocabulary.
 
- The program will print the commands that are executed with their associated terminal number that execute it, the responses given by the kernel, the final values of the words in the vocabulary, and at the end it will print `The result is possible` or `The result is not possible`. The result is possible if the value associated with a given word in the last execution of one of the different terminals.
+ The program will print the commands that are executed with their associated terminal number that execute it, the responses given by the kernel, the final values of the words in the vocabulary, and at the end it will print `The result is possible` or `The result is not possible`. The result is possible if the value associated with a given word in the last execution of one of the different terminals. It should always return `The result is possible`.
