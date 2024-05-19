@@ -1,4 +1,4 @@
-# In-kernel lock-less Cuckoo Hashing
+# In-kernel Cuckoo Hashing
  
 ## Execution Flow
 
