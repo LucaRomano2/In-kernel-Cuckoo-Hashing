@@ -14,7 +14,7 @@
 
    \- Determine whether a key is stored (if so, output its value) or not.
 
-   `echo "TT" | sudo tee /sys/kernel/cuckoo_hash/get>/dev/null`
+   `echo "key" | sudo tee /sys/kernel/cuckoo_hash/get>/dev/null`
 
    \- Insert a key with its relative value.
 
