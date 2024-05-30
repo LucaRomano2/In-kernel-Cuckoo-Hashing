@@ -269,10 +269,11 @@ void ckh_print(CKHash_Table *D)
 //////////////////////////////////////////////////////////////////////////////////////////
 
 static DEFINE_MUTEX(mutex);
-static char word_to_insert[MAX_BUF_LEN] = "";
+
+static char input_to_insert[MAX_BUF_LEN] = "";
 static char word_to_delete[MAX_BUF_LEN] = "";
 static char word_to_get[MAX_BUF_LEN] = "";
-static int value_to_insert = 0;
+static char word[MAX_BUF_LEN] = "";
 
 void free_word(char* word){
 	for(int i = 0; i < MAX_BUF_LEN; i++){
@@ -297,13 +298,13 @@ static ssize_t get_store(struct kobject *kobj, struct kobj_attribute *attr, cons
 		pr_info("found [%s] value=%d\n", word_to_get, ret_value);
 	else
 		pr_info("could not find [%s]\n", word_to_get);
+
 	mutex_unlock(&mutex);
-	
     return count;
 }
 
 static ssize_t insert_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
-    return snprintf(buf, PAGE_SIZE, "%s\n", word_to_insert);
+    return snprintf(buf, PAGE_SIZE, "%s\n", input_to_insert);
 }
 
 static ssize_t insert_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
@@ -311,22 +312,22 @@ static ssize_t insert_store(struct kobject *kobj, struct kobj_attribute *attr, c
         return -EINVAL;
 
 	mutex_lock(&mutex);
-	free_word(word_to_insert);
-    strncpy(word_to_insert, buf, count - 1);	
+	free_word(input_to_insert);
+    strncpy(input_to_insert, buf, count - 1);	
 	
-    return count;
-}
+	int value = 0, dec = 1;
+	int length = count;
+	int pos = count - 2;
+	while(input_to_insert[pos] != '='){
+		value += dec * (input_to_insert[pos] - '0');
+		pos--;
+		dec *= 10;
+	}
+	free_word(word);
+	strncpy(word, input_to_insert, pos);
+	ckh_insert(D, (unsigned char *)word, value);
+	mutex_unlock(&mutex);	
 
-static ssize_t value_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
-    return snprintf(buf, PAGE_SIZE, "%d\n", value_to_insert);
-}
-
-static ssize_t value_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
-	sscanf(buf, "%d", &value_to_insert);
-
-	ckh_insert(D, (unsigned char *)word_to_insert, value_to_insert);	
-	mutex_unlock(&mutex);
-	
     return count;
 }
 
@@ -337,6 +338,7 @@ static ssize_t delete_show(struct kobject *kobj, struct kobj_attribute *attr, ch
 static ssize_t delete_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
     if (count >= MAX_BUF_LEN)
         return -EINVAL;
+
 	mutex_lock(&mutex);
 	free_word(word_to_delete);
     strncpy(word_to_delete, buf, count - 1);	
@@ -347,7 +349,9 @@ static ssize_t delete_store(struct kobject *kobj, struct kobj_attribute *attr, c
 }
 
 static ssize_t print_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
+	mutex_lock(&mutex);
 	ckh_print(D);
+	mutex_unlock(&mutex);
     return snprintf(buf, PAGE_SIZE, "");
 }
 
@@ -360,14 +364,12 @@ static ssize_t print_store(struct kobject *kobj, struct kobj_attribute *attr, co
 
 static struct kobj_attribute get_attribute = __ATTR(get, 0660, get_show, get_store);
 static struct kobj_attribute insert_attribute = __ATTR(insert, 0660, insert_show, insert_store);
-static struct kobj_attribute value_attribute = __ATTR(value, 0660, value_show, value_store);
 static struct kobj_attribute delete_attribute = __ATTR(delete, 0660, delete_show, delete_store);
 static struct kobj_attribute print_attribute = __ATTR(print, 0660, print_show, print_store);
 
 static struct attribute *attrs[] = {
     &get_attribute.attr,
     &insert_attribute.attr,
-    &value_attribute.attr,
     &delete_attribute.attr,
     &print_attribute.attr,
     NULL,

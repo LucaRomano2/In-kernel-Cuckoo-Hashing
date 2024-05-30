@@ -57,15 +57,12 @@ for t in range(NUM_TERMINALS):
             operations_t.append(operations_t_c)
         if rand == 2:
             rand_word = random.randint(0, len(words) - 1)
-            command = 'echo "' + words[rand_word] + '" | sudo tee /sys/kernel/cuckoo_hash/insert>/dev/null'
-            executing_commands_t.append(command)
             rand_value = random.randint(0, 100)
-            command = 'echo ' + str(rand_value) + ' | sudo tee /sys/kernel/cuckoo_hash/value>/dev/null'
+            command = 'echo "' + words[rand_word] + '=' + str(rand_value) + '" | sudo tee /sys/kernel/cuckoo_hash/insert>/dev/null'
             operations_t_c.append('insert')
             operations_t_c.append(words[rand_word])
             operations_t_c.append(rand_value)
             operations_t.append(operations_t_c)
-            i += 1
         i += 1
         executing_commands_t.append(command)
     executing_commands.append(executing_commands_t)
