@@ -14,6 +14,7 @@
 #define MAX_LINE_LEN (8192)
 #define MAX_BUF_LEN 20
 
+static DEFINE_MUTEX(mutex);
 
 void ckh_init(int a[], int function_size)
 {
@@ -130,8 +131,9 @@ void ckh_rehash(CKHash_Table *D, int new_size)
 	kfree(D_new);
 }
 
-int ckh_insert(CKHash_Table *D, const unsigned char *key, int value)
+int ckh_insert(CKHash_Table *D, const unsigned char *key, int value, int count)
 {
+	if(count == 0) mutex_lock(&mutex);
 	unsigned long h1, h2;
 	unsigned int j;
 	CKHash_Cell x, temp;
@@ -143,12 +145,14 @@ int ckh_insert(CKHash_Table *D, const unsigned char *key, int value)
 
 	if (D->T1[h1].key != NULL && KEY_CMP(D->T1[h1].key, key) == 0) {
 		D->T1[h1].value = value;
+		mutex_unlock(&mutex);
 		return FALSE;
 	}
 
 	ckh_hash(&h2, D->a2, D->function_size, D->table_size, D->shift, key);
 	if (D->T2[h2].key != NULL && KEY_CMP(D->T2[h2].key, key) == 0) {
 		D->T2[h2].value = value;
+		mutex_unlock(&mutex);
 		return FALSE;
 	}
 	
@@ -168,6 +172,7 @@ int ckh_insert(CKHash_Table *D, const unsigned char *key, int value)
 			D->size++;
 			if (D->table_size < D->size)
 				ckh_rehash(D, 2 * D->table_size);
+			mutex_unlock(&mutex);
 			return TRUE;
 		}
 
@@ -180,6 +185,7 @@ int ckh_insert(CKHash_Table *D, const unsigned char *key, int value)
 			D->size++;
 			if (D->table_size < D->size)
 				ckh_rehash(D, 2 * D->table_size);
+			mutex_unlock(&mutex);
 			return TRUE;
 		}
 
@@ -196,14 +202,16 @@ int ckh_insert(CKHash_Table *D, const unsigned char *key, int value)
 	else
 		ckh_rehash(D, 2 * D->table_size);
 
-	ckh_insert(D, x.key, x.value);
+	ckh_insert(D, x.key, x.value, 1);
 	kfree(x.key); /* Free x.key, because it is already copied. */
 
+	mutex_unlock(&mutex);
 	return TRUE;
 }
 
 int ckh_get(CKHash_Table *D, const unsigned char *key, int *ret_value)
 {
+	mutex_lock(&mutex);
 	unsigned long hkey;
 	int found = FALSE;
 
@@ -219,11 +227,13 @@ int ckh_get(CKHash_Table *D, const unsigned char *key, int *ret_value)
 		found = TRUE;
 	}
 
+	mutex_unlock(&mutex);
 	return found;
 }
 
 int ckh_delete(CKHash_Table *D, const unsigned char *key)
 {
+	mutex_lock(&mutex);
 	unsigned long hkey;
 
 	ckh_hash(&hkey, D->a1, D->function_size, D->table_size, D->shift, key);
@@ -234,6 +244,7 @@ int ckh_delete(CKHash_Table *D, const unsigned char *key)
 			D->size--;
 			if (D->size < D->min_size)
 				ckh_rehash(D, D->table_size / 2);
+			mutex_unlock(&mutex);
 			return TRUE;
 		}
 	}
@@ -246,15 +257,18 @@ int ckh_delete(CKHash_Table *D, const unsigned char *key)
 			D->size--;
 			if (D->size < D->min_size)
 				ckh_rehash(D, D->table_size / 2);
+			mutex_unlock(&mutex);
 			return TRUE;
 		}
 	}
 
+	mutex_unlock(&mutex);
 	return FALSE;
 }
 
 void ckh_print(CKHash_Table *D)
 {
+	mutex_lock(&mutex);
 	unsigned int i;
 
 	for (i = 0; i < D->table_size; i++) {
@@ -263,34 +277,22 @@ void ckh_print(CKHash_Table *D)
 		if (D->T2[i].key != NULL)
 			pr_info("%s\t%d\n", D->T2[i].key, D->T2[i].value);
 	}
+
+	mutex_unlock(&mutex);
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-static DEFINE_MUTEX(mutex);
-
-static char input_to_insert[MAX_BUF_LEN] = "";
-static char word_to_delete[MAX_BUF_LEN] = "";
-static char word_to_get[MAX_BUF_LEN] = "";
-static char word[MAX_BUF_LEN] = "";
-
-void free_word(char* word){
-	for(int i = 0; i < MAX_BUF_LEN; i++){
-		word[i] = '\0';
-	}
-}
-
 static ssize_t get_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
-	return snprintf(buf, PAGE_SIZE, "%s\n", word_to_get);
+	return snprintf(buf, PAGE_SIZE, "%s\n", "");
 }
 
 static ssize_t get_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
     if (count >= MAX_BUF_LEN)
         return -EINVAL;
 
-	mutex_lock(&mutex);
-	free_word(word_to_get);
+	static char word_to_get[MAX_BUF_LEN] = "";
     strncpy(word_to_get, buf, count - 1);
 	
 	int ret_value = 0;
@@ -299,59 +301,51 @@ static ssize_t get_store(struct kobject *kobj, struct kobj_attribute *attr, cons
 	else
 		pr_info("could not find [%s]\n", word_to_get);
 
-	mutex_unlock(&mutex);
     return count;
 }
 
 static ssize_t insert_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
-    return snprintf(buf, PAGE_SIZE, "%s\n", input_to_insert);
+    return snprintf(buf, PAGE_SIZE, "%s\n", "");
 }
 
 static ssize_t insert_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
     if (count >= MAX_BUF_LEN)
         return -EINVAL;
 
-	mutex_lock(&mutex);
-	free_word(input_to_insert);
+	static char input_to_insert[MAX_BUF_LEN] = "";
     strncpy(input_to_insert, buf, count - 1);	
 	
 	int value = 0, dec = 1;
 	int length = count;
 	int pos = count - 2;
-	while(input_to_insert[pos] != '='){
+	while(input_to_insert[pos] != '=' || pos == -1){
 		value += dec * (input_to_insert[pos] - '0');
 		pos--;
 		dec *= 10;
 	}
-	free_word(word);
+	static char word[MAX_BUF_LEN] = "";
 	strncpy(word, input_to_insert, pos);
-	ckh_insert(D, (unsigned char *)word, value);
-	mutex_unlock(&mutex);	
-
+	ckh_insert(D, (unsigned char *)word, value, 0);
     return count;
 }
 
 static ssize_t delete_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
-    return snprintf(buf, PAGE_SIZE, "%s\n", word_to_delete);
+    return snprintf(buf, PAGE_SIZE, "%s\n", "");
 }
 
 static ssize_t delete_store(struct kobject *kobj, struct kobj_attribute *attr, const char *buf, size_t count) {
     if (count >= MAX_BUF_LEN)
         return -EINVAL;
 
-	mutex_lock(&mutex);
-	free_word(word_to_delete);
-    strncpy(word_to_delete, buf, count - 1);	
+	char word_to_delete[MAX_BUF_LEN] = "";
+    strncpy(word_to_delete, buf, count - 1);
 	ckh_delete(D, (unsigned char *)word_to_delete);	
-	mutex_unlock(&mutex);
 
     return count;
 }
 
 static ssize_t print_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
-	mutex_lock(&mutex);
 	ckh_print(D);
-	mutex_unlock(&mutex);
     return snprintf(buf, PAGE_SIZE, "");
 }
 

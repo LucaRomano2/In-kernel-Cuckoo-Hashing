@@ -36,7 +36,7 @@ CKHash_Table *D;
 
 CKHash_Table *ckh_construct_table(int min_size);
 
-int ckh_insert(CKHash_Table *D, const unsigned char *key, int value);
+int ckh_insert(CKHash_Table *D, const unsigned char *key, int value, int count);
 int ckh_get(CKHash_Table *D, const unsigned char *key, int *ret_value);
 int ckh_delete(CKHash_Table *D, const unsigned char *key);
 void ckh_print(CKHash_Table *D);

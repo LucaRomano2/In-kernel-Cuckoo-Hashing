@@ -1,12 +1,15 @@
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 import sys
+import os
 import random
+
+current_directory = os.getcwd()[0:-4] + 'module'
 
 def execute_commands(commands, t):
     for command in commands:
         print('terminal ' + str(t) + ': ' + command)
-        subprocess.call(command, shell=True)    
+        subprocess.call(command, cwd=current_directory, shell=True)    
 
 initial_commands = [
     'make',
@@ -59,6 +62,7 @@ for t in range(NUM_TERMINALS):
             rand_word = random.randint(0, len(words) - 1)
             rand_value = random.randint(0, 100)
             command = 'echo "' + words[rand_word] + '=' + str(rand_value) + '" | sudo tee /sys/kernel/cuckoo_hash/insert>/dev/null'
+            print(command)
             operations_t_c.append('insert')
             operations_t_c.append(words[rand_word])
             operations_t_c.append(rand_value)
@@ -72,7 +76,7 @@ print_command = 'sudo cat /sys/kernel/cuckoo_hash/print'
 terminate_command = 'sudo rmmod cuckoo_hash_kernel'
 
 for command in initial_commands:
-    subprocess.call(command, shell=True)
+    subprocess.call(command, cwd=current_directory, shell=True)
 
 print('Command executed with their associated terminal:')
 executed_commands = []
@@ -83,13 +87,13 @@ with ThreadPoolExecutor() as executor:
 for command in executed_commands:
     result = command.result()
 
-subprocess.call(print_command, shell=True)
+subprocess.call(print_command, cwd=current_directory, shell=True)
 
 # Check that the solution is possible
 words_value = []
 for word in words:
     command = 'echo "' + str(word) + '" | sudo tee /sys/kernel/cuckoo_hash/get>/dev/null'
-    subprocess.call(command, shell=True)
+    subprocess.call(command, cwd=current_directory, shell=True)
 
 # At the beginning no words have value
 possible_responses = []
@@ -106,7 +110,7 @@ for word in words:
         possible_responses_t.append(resp)
     possible_responses.append(possible_responses_t)
 
-subprocess.call(terminate_command, shell=True)
+subprocess.call(terminate_command, cwd=current_directory, shell=True)
 output_bytes = subprocess.check_output(["sudo", "dmesg"])
 output_string = output_bytes.decode("utf-8")
 lines = output_string.split("\n")
