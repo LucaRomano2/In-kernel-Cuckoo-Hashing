@@ -281,7 +281,6 @@ void ckh_print(CKHash_Table *D)
 	mutex_unlock(&mutex);
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////
 
 static ssize_t get_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf) {
