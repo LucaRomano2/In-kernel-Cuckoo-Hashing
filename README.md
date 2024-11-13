@@ -18,9 +18,7 @@
 
    \- Insert a key with its relative value.
 
-   `echo "key" | sudo tee /sys/kernel/cuckoo_hash/insert>/dev/null`
-
-   `echo value | sudo tee /sys/kernel/cuckoo_hash/value>/dev/null`
+   `echo "key=value" | sudo tee /sys/kernel/cuckoo_hash/insert>/dev/null`
 
    \- Delete a key.
 
