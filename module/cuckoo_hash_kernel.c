@@ -21,7 +21,7 @@ void ckh_init(int a[], int function_size)
 	int i;
 	int random = 0;
 	for (i = 0; i < function_size; i++){
-    int random_number;
+    	int random_number;
 		// Generate a random number using get_random_bytes()
 		get_random_bytes(&random_number, sizeof(random_number));
 		a[i] = random_number;
