@@ -1,4 +1,11 @@
 # In-kernel Cuckoo Hashing
+The data structure "Cuckoo-Hash" is implemented as a kernel module, supporting the operations of:
+- Inserting a key with an associated value
+- Removing a key
+- Searching if a key is present and, in case, returning it's asscoiated value
+- Listing all the key with their values
+The module supports parallel execution, using locks to manage the access to the data structure.
+Reference for the Cuckoo-Hash implementation: https://github.com/canasai/ckhash
  
 ## Execution Flow
 
