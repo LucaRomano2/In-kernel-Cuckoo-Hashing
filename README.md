@@ -20,7 +20,7 @@ Reference for the Cuckoo-Hash implementation: https://github.com/canasai/ckhash
 
 - These are the supported operations:
 
-   \- Determine whether a key is stored (if so, output its value) or not.
+   \- Determine whether a key is stored (if so, return its value) or not.
 
    `echo "key" | sudo tee /sys/kernel/cuckoo_hash/get>/dev/null`
 
@@ -40,7 +40,7 @@ Reference for the Cuckoo-Hash implementation: https://github.com/canasai/ckhash
 
 ## Test
 
--The file `test.c` tests the execution of the algorithm simulating an execution with a defined number of commands, terminals (that execute in parallel different commands) and words.
+-The file `test.py` tests the execution of the algorithm simulating an execution with a defined number of commands, terminals (that execute in parallel different commands) and words.
 To execute type on the command line: `python3 test.py NUM_COMMANDS NUM_TERMINALS NUM_WORLDS`.
 
  \- `NUM_COMMANDS` indicates the number of commands that will be executed in each terminal.
