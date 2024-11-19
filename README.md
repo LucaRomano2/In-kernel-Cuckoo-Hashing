@@ -5,6 +5,7 @@ The data structure "Cuckoo-Hash" is implemented as a kernel module, supporting t
 - Searching if a key is present and, in case, returning it's asscoiated value
 - Listing all the key with their values
 The module supports parallel execution, using locks to manage the access to the data structure.
+
 Reference for the Cuckoo-Hash implementation: https://github.com/canasai/ckhash
  
 ## Execution Flow
